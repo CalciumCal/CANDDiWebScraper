@@ -1,29 +1,28 @@
-const rp = require('request-promise');
-const prompt = require('prompt'); 
+var i = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+const readline = require('readline');
 
-//JSON object to configure data (email in this case)
-var response = [ 
-{
-    name: 'email',
-    validator: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-    warning: 'Email is not valid'
-}]
+function validateAndFormatEmail() {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+    
+    return new Promise(resolve => rl.question('Enter Email ', result =>{
+        rl.close();
+        if(i.test(String(result).toLowerCase()) !== true){
+            console.log('Invalid Email');
+            return null; 
+        } else {
+            result = 'https://www.' + result.split('@')[1]
+            resolve(result);
+        }
+    }))
+}
 
-//Start the user input
-prompt.start();
+async function webpageRequest() {
+    let email = await validateAndFormatEmail();
 
-//Display prompt and display what user inputs into console after pressing Enter
-prompt.get(response, function (err, result){
-    if(err){
-        console.log(err);
-        return 1;
-    } else {
+    console.log(email);
+}
 
-        var email = result.email;
-        var input = email;
-        
-        console.log('Response: ' + input);
-    }
-});
-
-// module.exports = EmailInput;
+webpageRequest();

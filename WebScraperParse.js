@@ -7,7 +7,7 @@ const WebScraperParse = function(url) {
       return {
         name: $('.firstHeading', html).text(),
         birthday: $('.bday', html).text(),
-      };
+      }
     })
     .catch(function(err) {
       //handle error

@@ -13,4 +13,14 @@ function validate(phone) {
     }
 }
 
-validate(inputtxt);
+var knwl = require("knwl.js");
+	
+var knwlInstance = new knwl('english');
+
+knwlInstance.register('dates', require('./knwl.js/default_plugins/dates.js'));
+
+knwlInstance.init("This is a string. This was written on the 2nd of June, of 2015. Hi@hi.com");
+
+//var dates = knwlInstance.get('dates');
+
+console.log(knwlInstance.get('emails'));

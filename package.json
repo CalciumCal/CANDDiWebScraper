@@ -5,6 +5,7 @@
   "main": "CANDDiWebScraper.js",
   "dependencies": {
     "cheerio": "^1.0.0-rc.3",
+    "email-crawler": "^1.0.4",
     "knwl.js": "^1.0.2",
     "prompt": "^1.0.0",
     "puppeteer": "^1.16.0",

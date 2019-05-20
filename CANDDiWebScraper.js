@@ -1,22 +1,21 @@
 const rp = require('request-promise');
 const $ = require('cheerio');
 const readline = require('readline');
-//const knwl = require('knwl.js');
-//var knwlInstance = new knwl('english');
+const phoneLib = require('libphonenumber-js')
 var Scraper = require("email-crawler");
 
 var i = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 main();
 
 // Main function
-function main() {
-    webpageRequest();
+async function main() {
+    const url = await inputAndFormatEmail();
+    emailRequest(url);
+    phoneRequest(url);
 }
 
 //Request information from a webpage using Url
-async function webpageRequest() {
-    var url = await inputAndFormatEmail();
-
+function emailRequest(url) {
     rp(url)
         .then(async function (html) {
             if (html.includes('cdn-cgi\/l\/email-protection#')) {
@@ -24,11 +23,22 @@ async function webpageRequest() {
             }
             return await scraper(url);
         })
-
-        .then(function (emails) {
-            console.log("Emails: " + emails);
+        .then(function(emails){
+            console.log(emails);
         })
+        .catch(function (err) {
+            console.log('Web page does not exist');
+        })
+}
 
+function phoneRequest(url){
+    rp(url)
+        .then(function(html){
+            return findPhoneNo(html);
+        })
+        .then(function(phoneNo){
+            console.log(phoneNo);
+        })
         .catch(function (err) {
             console.log('Web page does not exist');
         })
@@ -37,13 +47,18 @@ async function webpageRequest() {
 //Crawls the domain for email addresses
 async function scraper(url) {
     var emailscraper = new Scraper(url);
-    return new Promise(resolve => emailscraper.getLevels(2).then((emails) =>{
-        resolve(emails);
+    return new Promise(resolve => emailscraper.getLevels(2).then((emails) => {
+        if(emails < 1) {
+            return console.log("No emails found");
+        }
+        return resolve(emails.map(function (elem) {
+            return { "Email": elem };
+        }));
     }))
-    
-    .catch((e) => {
-        console.log("error");
-    })
+
+        .catch((e) => {
+            console.log("error");
+        })
 }
 
 //Take user input, check valid email, format email into Url
@@ -88,7 +103,29 @@ function cfDecodeEmail(encodedString) {
         }
         emails.push(email);
     }
-    return emails;
+    return emails.map(function (elem) {
+        return { "Email": elem };
+    });
+}
+
+function findPhoneNo(str) {
+    var numbers = phoneLib.findNumbers(str);
+    if (numbers < 1) {
+        return console.log("No valid phone numbers found");
+    }
+
+    var results = [];
+    for (var i = 0; i < numbers.length; i++) {
+        var parse = phoneLib.parsePhoneNumberFromString(numbers[i].phone, numbers[i].country);
+        results.push(parse.number);
+    }
+
+    //Makes array elements unique
+    results = Array.from(new Set(results));
+
+    return results.map(function (elem) {
+        return { "Phone": elem };
+    });
 }
 
 

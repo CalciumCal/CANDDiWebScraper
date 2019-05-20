@@ -7,6 +7,7 @@
     "cheerio": "^1.0.0-rc.3",
     "email-crawler": "^1.0.4",
     "knwl.js": "^1.0.2",
+    "libphonenumber-js": "^1.7.18",
     "prompt": "^1.0.0",
     "puppeteer": "^1.16.0",
     "request": "^2.88.0",

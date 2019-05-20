@@ -1,7 +1,6 @@
+const phoneLib = require('libphonenumber-js')
 const rp = require('request-promise');
 const $ = require('cheerio');
-// const knwl = require('knwl.js'); Maybe Remove
-// var knwlInstance = new Knwl('english'); Maybe Remove
 const readline = require('readline');
 
 var i = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -15,34 +14,19 @@ function main() {
 //Request information from a webpage using Url
 async function webpageRequest() {
     var url = await inputAndFormatEmail();
-    
+
     rp(url)
-        .then(async function (html) {
-            if (html.includes('cdn-cgi\/l\/email-protection#')) {
-                return cfEmailParse(html);
-            }
-            return await scraper(url);
+        .then(function (html) {
+            
         })
 
-        .then(function (emails) {
-            console.log("Emails: " + emails);
+        .then(function (html) {
+            console.log(html);
         })
 
-        .catch(function (err) {
-            console.log('Web page does not exist');
-        })
-}
-
-//Crawls the domain for email addresses
-async function scraper(url) {
-    var emailscraper = new Scraper(url);
-    return new Promise(resolve => emailscraper.getLevels(2).then((emails) =>{
-        resolve(emails);
-    }))
-    
-    .catch((e) => {
-        console.log("error");
-    })
+    // .catch(function (err) {
+    //     console.log('Web page does not exist');
+    // })
 }
 
 //Take user input, check valid email, format email into Url
@@ -64,34 +48,22 @@ function inputAndFormatEmail() {
     }))
 }
 
-//Extracts the cloudflare encryption number from the html
-function cfEmailParse(html) {
-    var parsed = [];
-    var matched = html.match(/cdn-cgi\/l\/email-protection#([^">]+">)/g);
-    for (var i = 0; i < matched.length; i++) {
-        parsed.push(matched[i].match(/#(.*?)">/)[1]);
+function findPhoneNo(str) {
+    var numbers = phoneLib.findNumbers(str)
+    if(numbers < 1){
+        return console.log("No valid phone numbers found");
     }
-    return cfDecodeEmail(parsed);
-}
 
-//Decodes the cloudflare encryption into a normal email
-function cfDecodeEmail(encodedString) {
-    var emails = [];
-
-    for (var i = 0; i < encodedString.length; i++) {
-        var email = '', n, x;
-        var r = parseInt(encodedString[i].substr(0, 2), 16);
-        for (n = 2; encodedString[i].length - n; n += 2) {
-            x = parseInt(encodedString[i].substr(n, 2), 16) ^ r;
-            email += String.fromCharCode(x);
-        }
-        emails.push(email);
+    var results = [];
+    for (var i = 0; i < numbers.length; i++) {
+        var parse = phoneLib.parsePhoneNumberFromString(numbers[i].phone, numbers[i].country);
+        results.push(parse.number);
     }
-    return emails;
+
+    //Makes array elements unique
+    results = Array.from(new Set(results));
+
+    return results.map(function(elem){
+        return {"Phone Number":elem}; 
+    });
 }
-
-
-
-
-
-

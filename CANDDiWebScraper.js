@@ -1,9 +1,10 @@
 const rp = require('request-promise');
 const $ = require('cheerio');
-const knwl = require('knwl.js');
-var knwlInstance = new Knwl('english');
-
 const readline = require('readline');
+//const knwl = require('knwl.js');
+//var knwlInstance = new knwl('english');
+var Scraper = require("email-crawler");
+
 var i = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 main();
 
@@ -12,18 +13,51 @@ function main() {
     webpageRequest();
 }
 
+//Request information from a webpage using Url
+async function webpageRequest() {
+    var url = await inputAndFormatEmail();
+
+    rp(url)
+        .then(async function (html) {
+            if (html.includes('cdn-cgi\/l\/email-protection#')) {
+                return cfEmailParse(html);
+            }
+            return await scraper(url);
+        })
+
+        .then(function (emails) {
+            console.log("Emails: " + emails);
+        })
+
+        .catch(function (err) {
+            console.log('Web page does not exist');
+        })
+}
+
+//Crawls the domain for email addresses
+async function scraper(url) {
+    var emailscraper = new Scraper(url);
+    return new Promise(resolve => emailscraper.getLevels(2).then((emails) =>{
+        resolve(emails);
+    }))
+    
+    .catch((e) => {
+        console.log("error");
+    })
+}
+
 //Take user input, check valid email, format email into Url
 function inputAndFormatEmail() {
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout
     });
-    
-    return new Promise(resolve => rl.question('Enter Email ', result =>{
+
+    return new Promise(resolve => rl.question('Enter Email ', result => {
         rl.close();
-        if(i.test(String(result).toLowerCase()) !== true){
+        if (i.test(String(result).toLowerCase()) !== true) {
             console.log('Invalid Email');
-            return null; 
+            return null;
         } else {
             result = 'https://www.' + result.split('@')[1]
             resolve(result);
@@ -31,22 +65,30 @@ function inputAndFormatEmail() {
     }))
 }
 
-//Request webpage from Url
-async function webpageRequest() {
-    //let url = await inputAndFormatEmail();
+//Extracts the cloudflare encryption number from the html
+function cfEmailParse(html) {
+    var parsed = [];
+    var matched = html.match(/cdn-cgi\/l\/email-protection#([^">]+">)/g);
+    for (var i = 0; i < matched.length; i++) {
+        parsed.push(matched[i].match(/#(.*?)">/)[1]);
+    }
+    return cfDecodeEmail(parsed);
+}
 
-    url = 'https://www.canddi.com/';
+//Decodes the cloudflare encryption into a normal email
+function cfDecodeEmail(encodedString) {
+    var emails = [];
 
-    rp(url)
-        .then(function(html){
-            console.log(html);
-        })
-
-        .catch(function(err){
-            console.log('Web page does not exist');
-        })
-
-    //console.log(email);
+    for (var i = 0; i < encodedString.length; i++) {
+        var email = '', n, x;
+        var r = parseInt(encodedString[i].substr(0, 2), 16);
+        for (n = 2; encodedString[i].length - n; n += 2) {
+            x = parseInt(encodedString[i].substr(n, 2), 16) ^ r;
+            email += String.fromCharCode(x);
+        }
+        emails.push(email);
+    }
+    return emails;
 }
 
 

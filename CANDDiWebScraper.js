@@ -16,7 +16,6 @@ async function main() {
     addressRequest(url);
 }
 
-//Request information from a webpage using Url
 function emailRequest(url) {
     rp(url)
         .then(async function (html) {
@@ -151,6 +150,10 @@ function findPhoneNo(str) {
 
 function getAddress(html) {
     substr = html.match(reg);
+    if(substr == null){
+        return console.log("No postcodes found")
+    }
+    
     var postcode = substr.sort((a, b) =>
         substr.filter(v => v === a).length
         - substr.filter(v => v === b).length

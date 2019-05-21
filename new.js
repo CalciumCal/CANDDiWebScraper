@@ -31,9 +31,9 @@ function addressRequest(url) {
                     console.log('Post code does not exist');
                 })
         })
-        .catch(function (err) {
-            console.log('Web page does not exist');
-        })
+        // .catch(function (err) {
+        //     console.log('Web page does not exist');
+        // })
 }
 
 //Take user input, check valid email, format email into Url
@@ -57,6 +57,9 @@ function inputAndFormatEmail() {
 
 function getAddress(html) {
     substr = html.match(reg);
+    if(substr == null){
+        return console.log("No postcodes found")
+    }
     var postcode = substr.sort((a, b) =>
         substr.filter(v => v === a).length
         - substr.filter(v => v === b).length
